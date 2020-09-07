@@ -78,8 +78,10 @@ def find_random_SMILES(kegg_df, n_samples, cpds_to_ignore):
     Inputs: trained word2vec model, list of lists of fragments within amino acids
     Outputs: one vector (sum of all fragment vectors) per amino acid
 """
-def add_frag_vectors(word2vec, frags):
+def add_frag_vectors(cpd_list, word2vec, frags):
     vectors = []
+    removed_cpds = []
+    i = 0
     #loop through amino acids
     for cpd in frags:
         vs = []
@@ -92,8 +94,13 @@ def add_frag_vectors(word2vec, frags):
         #Only sum vectors if vectors were present in the compound
         if vs:
             vectors.append(np.sum(vs, axis=0).astype("float64"))
+        else:
+            removed_cpds.append(cpd_list[i])
 
-    return vectors
+        #Ensure the correct compound gets removed
+        i+=1
+
+    return vectors, [x for x in cpd_list if x not in removed_cpds]
 
 """ Run TSNE visualization
     Input: dataframe of compoud vectors (df["label"] is the compound label)
@@ -192,15 +199,18 @@ def KEGG_network():
 """
 def find_distance(cpd, centers, distances):
     d = []
+    #Find the distance between the "centers" of the largest connected component
     for c in centers:
         try:
             d.append(distances[c][cpd])
         except:
             pass
+
+    #If the random compound is not in the largest connected component, labeld "NC" (not connected)
     if not d:
         return "NC"
+    #Otherwise, label with the max distance from the center
     else:
-        print(cpd, max(d))
         return str(max(d))
 
 def main():
@@ -215,10 +225,9 @@ def main():
     #Find 10 of them, ignoring no compounds (initially)
     rand_cpds, cpd_list = find_random_SMILES(kegg_df, 100, [])
     rand_frags, cpd_list = find_frags_within_SMILES(cpd_list, rand_cpds, frags)
-    rand_vectors = add_frag_vectors(word2vec, rand_frags)
+    rand_vectors, cpd_list = add_frag_vectors(cpd_list, word2vec, rand_frags)
     rand_df = pd.DataFrame(rand_vectors)
     rand_df["Cpds"] = cpd_list
-    print(rand_df)
 
     #Label by max distance from central compound
     cpd_distance = []
