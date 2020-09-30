@@ -8,6 +8,7 @@ from gensim.models import KeyedVectors
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn import cluster
 
 """ Load trained Word2Vec model - Gensim on full KEGG
     Input: None
@@ -127,7 +128,7 @@ def add_frag_vectors(word2vec, frags):
     Input: dataframe of compoud vectors (df["label"] is the compound label)
     Output: Visualization of the trained vectors
 """
-def TSNE_visual(df, n_categories):
+def TSNE_visual(df, n_categories, classification):
     #find values to pass to TSNE
     data_values = df[list(range(0,100))].values
 
@@ -140,11 +141,14 @@ def TSNE_visual(df, n_categories):
     plt.figure(figsize=(16,10))
     sns.scatterplot(
         x="tsne-2d-one", y="tsne-2d-two",
-        hue="label",
+        hue=classification,
         palette=sns.color_palette("hls", n_categories),
-        data=df,
-        legend="full"
+        data=df
+        #legend="full"
     )
+
+    plt.xlabel("")
+    plt.ylabel("")
     plt.show()
 
 """ Find all compounds associated with a particular class of compounds within KEGG
@@ -162,6 +166,29 @@ def get_class_dataframe(kegg_df, word2vec, frags, class_label, cpd_classes):
     class_df["label"] = [class_label] * len(class_df)
     print("Number of", class_label, "compounds:", len(class_df))
     return class_df
+
+""" K-means clustering of word2vec data
+    Input: model (trained word2vec model), num_clusters (the number of clusters)
+    Output: Output dictionary of compounds and cluster labels associated with them (to compare with W2V)
+"""
+def clustering(full_df, num_clusters):
+    sub_df = full_df.drop(columns=["label"])
+    X = sub_df.values.tolist()
+    # print(model)
+    # X = model[model.wv.vocab]
+    # print(X)
+    #set up clusters
+    kmeans = cluster.KMeans(n_clusters = num_clusters)
+    #fit Word2Vec data to cluster model
+    kmeans.fit(X)
+
+    #kmean_labels = kmeans.labels_
+    full_df["kmean_labels"] = kmeans.labels_
+
+    #Test accuratness of k-means (//TODO: talk to Yanbo about better ways of doing this?)
+    for index, row in full_df.iterrows():
+        print(row["label"], row["kmean_labels"])
+    return full_df
 
 def main():
     word2vec = load_w2v()
@@ -197,18 +224,22 @@ def main():
         full_df = full_df.append(get_class_dataframe(kegg_df, word2vec, frags, class_label, cpd_classes))
 
     ## RANDOM CPDS ##
-    rand_cpds = find_random_SMILES(kegg_df, 100, list(cpd_classes.keys()))
-    rand_frags = find_frags_within_SMILES(rand_cpds, frags)
-    rand_vectors = add_frag_vectors(word2vec, rand_frags)
-    rand_df = pd.DataFrame(rand_vectors)
-    rand_df["label"] = ["Random"] * len(rand_df)
-    print("Number of random compounds:", len(rand_df))
+    # rand_cpds = find_random_SMILES(kegg_df, 100, list(cpd_classes.keys()))
+    # rand_frags = find_frags_within_SMILES(rand_cpds, frags)
+    # rand_vectors = add_frag_vectors(word2vec, rand_frags)
+    # rand_df = pd.DataFrame(rand_vectors)
+    # rand_df["label"] = ["Random"] * len(rand_df)
+    # print("Number of random compounds:", len(rand_df))
 
-    #Combine aa and random dataframes
-    full_df = full_df.append(rand_df)
+    # #Combine aa and random dataframes
+    # full_df = full_df.append(rand_df)
 
     #Run TSNE - number of classes is the number of cpd classes + 1 (random compounds)
-    TSNE_visual(full_df, len(list(set(cpd_classes.values()))) + 1)
+    TSNE_visual(full_df, len(list(set(cpd_classes.values()))), "label")# + 1)
+
+    #K-means clustering
+    #full_df = clustering(full_df, len(list(set(cpd_classes.values()))))
+    #TSNE_visual(full_df, len(list(set(cpd_classes.values()))), "kmean_labels")
 
 
 if __name__ == "__main__":
