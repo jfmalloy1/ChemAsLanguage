@@ -223,7 +223,7 @@ def main():
 
     ## RANDOM CPDS ##
     #Find 10 of them, ignoring no compounds (initially)
-    rand_cpds, cpd_list = find_random_SMILES(kegg_df, 100, [])
+    rand_cpds, cpd_list = find_random_SMILES(kegg_df, 1000, [])
     rand_frags, cpd_list = find_frags_within_SMILES(cpd_list, rand_cpds, frags)
     rand_vectors, cpd_list = add_frag_vectors(cpd_list, word2vec, rand_frags)
     rand_df = pd.DataFrame(rand_vectors)
@@ -235,10 +235,14 @@ def main():
         cpd_distance.append(find_distance(re.sub(".mol", "", row["Cpds"]), centers, distances))
 
     rand_df["label"] = cpd_distance
+
+    #Remove all "NC" labels for clearer interpretation
+    sub_df = rand_df[rand_df["label"] != "NC"]
     #print("Number of random vectors:", len(rand_df))
 
     #Run TSNE
-    TSNE_visual(rand_df, len(rand_df["label"].unique()))
+    #TSNE_visual(rand_df, len(rand_df["label"].unique()))
+    TSNE_visual(sub_df, len(sub_df["label"].unique()))
 
 
 if __name__ == "__main__":
