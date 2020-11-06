@@ -24,7 +24,7 @@ def mol_from_smarts(smarts):
 """ Creates a histogram of occurances of fragments within the overall cpd distribution
     Input:  mols - mol representations of overall distribution
             frags - fragments found within KEGG
-    Output: dictionary containing number of time a fragment appears in the overall distribution
+    Output: dictionary containing number of time a fragment appears in the overall distribution {smarts:occurances}
 """
 def mol_count(mols, frags):
     h = {}
@@ -33,7 +33,6 @@ def mol_count(mols, frags):
         for m in mols:
             if m.HasSubstructMatch(f):
                 h[s] += 1
-
     return h
 
 """ Find the base fragments - those that appear in all splits
@@ -76,42 +75,52 @@ def base_frags(frags):
     print("Fragment std:", np.std(frag_stats))
 
 """ Graphs basic disributions
-    Input: h - a dictionary of smarts strings and the number of occurances within KEGG
+    Input: h - a dictionary of smarts strings and the number of occurances within KEGG, i: iteration of particular dictionary (e.g., 1-10)
     Output: pretty graphs :)
 """
 def distribution_graph(h, i):
     #Calculate AUC to distinguish splits
     yvals = list(sorted(h.values(), reverse=True))
     xvals = np.linspace(0, 1, num=len(yvals))
-    area = np.trapz(yvals, dx=xvals[1])
-    plt.plot(xvals, yvals, label = "Split " + str(i) + " AUC=" + str(round(area, 2)))
-    plt.legend()
+    #area = np.trapz(yvals, dx=xvals[1])
+    plt.plot(xvals, yvals, label = "100 Random KEGG Compounds", color="darkgreen", linewidth=3)#"Split " + str(i) + " AUC=" + str(round(area, 2))) #Note: AUC label
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.xlabel("Rank-ordered Compounds")
+    plt.ylabel("Occurances in KEGG")
+    plt.legend
+    plt.show()
 
 def main():
-    ## Read in mol files of KEGG/domain/LUCA ##
-    with open("../kegg_smiles.txt",'r') as smiles:
-        mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
-        mols = [m for m in mols if m != None]
+    # ## Read in mol files of KEGG/domain/LUCA ##
+    # with open("../kegg_smiles.txt",'r') as smiles:
+    #     mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+    #     mols = [m for m in mols if m != None]
+    #
+    # #Read in pre-generated fragments from a file
+    # frags = []
+    # dirpath = "Tests/p85/"
+    # # for file in os.listdir(dirpath): #For reading in all fragments
+    # #     fp = dirpath + file
+    # with open("Tests/Hundred_cpds/dup_100cpds_0.txt") as f:
+    #     frags.append([line.rstrip('\n') for line in f])
+    #
+    # # ## Find repeatability ##
+    # # base_frags(frags)
+    #
+    # ## Find distribution over full database ##
+    # for i in range(len(frags)):
+    #     #Turn smarts list into list of sets (mol, smarts)
+    #     f = mol_from_smarts(frags[i])
+    #     #Find histogram of frag occurances
+    #     h = mol_count(mols, f)
+    #     #Graph things
+    #     distribution_graph(h, i)
 
-    #Read in pre-generated fragments from a file
-    frags = []
-    dirpath = "Tests/Twenty_cpds_nomix/"
-    for file in os.listdir(dirpath):
-        fp = dirpath + file
-        with open(fp) as f:
-            frags.append([line.rstrip('\n') for line in f])
-
-    # ## Find repeatability ##
-    # base_frags(frags)
-
-    ## Find distribution ##
-    for i in range(len(frags)):
-        #Turn smarts list into list of sets (mol, smarts)
-        f = mol_from_smarts(frags[i])
-        #Find histogram of frag occurances
-        h = mol_count(mols, f)
-        #Graph things
-        distribution_graph(h, i)
+    ## Find pre-made distribution over random molecule set ##
+    h = pd.read_csv("Tests/Hundred_cpds_random_subsampleOccurances/dup_0_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
+    print(h)
+    distribution_graph(h, 0)
 
     plt.show()
 
