@@ -182,6 +182,34 @@ def base_frags(frags):
     print("Fragment mean:", np.mean(frag_stats))
     print("Fragment std:", np.std(frag_stats))
 
+""" Find all smiles strings associated with a particular domain
+    Input: Domain from ["Eukarya", "Bacteria", "Archaea"]
+    Output: list of all smiles strings associated with that particular domain
+"""
+def domain_smiles(domain):
+    fp = ""
+    if domain == "Eukarya":
+        fp = "eukarya_cpds.csv"
+    elif domain == "Bacteria":
+        fp = "bacteria_cpds.csv"
+    elif domain == "Archaea":
+        fp = "archaea_cpds.csv"
+
+    domain_df = pd.read_csv(fp)
+    #kegg_data_curated is the same as chiral_molweight_formula_labels, containing smiles in the "S" column
+    kegg_df = pd.read_csv("kegg_data_curated.csv") #Assumes kegg_data_curated.csv is in above directory
+
+    #Return smiles strings (in list object) of that particular domain
+    return kegg_df[kegg_df["C"].isin(domain_df["compounds"])].dropna(subset=["S"])["S"].tolist()
+
+""" Find all smiles compounds associated with minerals (COD database subset)
+    Input: filepath to csv file containing a subset of the COD database
+    Output: List of smiles
+"""
+def mineral_smiles(fp):
+    df = pd.read_csv(fp)
+    return df["SMI"].tolist()
+
 """ Graphs basic disributions
     Input: h - a dictionary of smarts strings and the number of occurances within KEGG, i: iteration of particular dictionary (e.g., 1-10);
         l - label of graph, rev - True/False distinction for reversability of sorting, fp - filepath for savefig, title - title for plot
@@ -209,13 +237,13 @@ def distribution_graph(h, i, l, rev, fp, title):
 """
 if __name__ == "__main__":
     #Input file - list of random molecules in SMILES format
-    print("Getting random molecules from", sys.argv[1])
+    print("Getting (database) compounds from", sys.argv[1])
 
     #Make directory (if it does not already exist)
     if not os.path.isdir(sys.argv[2]):
         os.mkdir(sys.argv[2])
 
-    # # ## Compound Classes ##
+    # ## Compound Classes ##
     # smiles = cpd_classes("../br08001.json", "../chiral_molweight_formula_labels.csv", "Hormones and transmitters")
     # mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
     # mols = [m for m in mols if m != None]
@@ -227,6 +255,20 @@ if __name__ == "__main__":
     # mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
     # mols = [m for m in mols if m != None]
     # print("Retieved",len(mols),"classified compounds")
+
+    # ## Domains ##
+    # #Goal - have either Eukarya, Bacteria, or Archaea compounds (general compounds) be used for fragments
+    # smiles = domain_smiles("Eukarya")
+    # mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+    # mols = [m for m in mols if m != None]
+    # print("Retieved",len(mols),"random molecules")
+
+    ## Minerals
+    #Goal - see mineral occurance, both within minerals themselves and across KEGG (for now)
+    smiles = mineral_smiles("COD_SMI_IMA_subset218.csv")
+    mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+    mols = [m for m in mols if m != None]
+    print("Retieved",len(mols),"random molecules")
 
     #Get all of KEGG
     with open(sys.argv[1],'r') as db_smiles:
@@ -243,7 +285,7 @@ if __name__ == "__main__":
         #Fragments - determines different fragments within the molecules.
         # # NOTE: use a subset of full random mols (mols) or class_mols, as needed
         #mols = sample(db, 100)
-        mols = db_mols #Note: for full database test
+        #mols = db_mols #Note: for full database test
         # for t in [0.01, 0.1, 1, 10, 100]: #Note: testing timeout for MCS algorithm
         t = 0.1 #timeout time for MCS - 0.1
         for s in (fragments(mols, t)): # either mols or a sample, depending on if a subsample is taken or not
@@ -293,7 +335,7 @@ if __name__ == "__main__":
                 print(str(k) + "," + str(v), file=out)
 
     ## Find pre-made distribution over random molecule set ##
-    h = pd.read_csv(sys.argv[2] + str(i) + "_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
+    h = pd.read_csv(sys.argv[2] + str(i) + "_fullOccurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
     distribution_graph(h, 0, sys.argv[3], True, sys.argv[2] + "subset_only", sys.argv[3].replace("_", " ") + " Subset Only")
 
     plt.savefig(sys.argv[2] + "distribution_graph")
