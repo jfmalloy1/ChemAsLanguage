@@ -63,14 +63,30 @@ def create_graph(frags):
     # nx.draw(G, with_labels=True, font_weight="bold")
     # plt.show()
 
+""" Get a list of mol objects from assembly fragments
+    Input: File path (fp) containing assembly fragments
+    Output: A list of RDKit mol objects
+"""
+def get_assembly_frags(fp):
+    lines = open(fp).readlines()
+    #Turn all inchi fragments into mol objects
+    return [Chem.MolFromInchi(i.strip()) for i in lines[37:] if "InChI" in i] #Note: Header takes 37 lines in this particular example
+
+""" Convert a list of RDKit mol objects into (canonical) smiles
+    Input: RDKit mol object list
+    Output: list of canonical smiles
+"""
+def get_canonical_smiles(mols):
+    return list(set([Chem.MolToSmiles(m) for m in mols]))
+
 def main():
     ### Number of fragments in each compound ###
-    # #Read in fragments (Archaea as a test)
-    # fp = "Biology/Data/Archaea/Archaea0_fullOccurances.csv"
-    # a_df = pd.read_csv(fp)
-    # a_frags = a_df["Frags"].tolist() #Smarts strings found in archaea
-    # a_frags = convert_to_mol_smarts(a_frags)
-    # print("Found", len(a_frags), "archaea fragments")
+    #Read in fragments (Archaea as a test)
+    fp = "Biology/Data/Archaea/Archaea0_fullOccurances.csv"
+    a_df = pd.read_csv(fp)
+    a_frags = a_df["Frags"].tolist() #Smarts strings found in archaea
+    a_mols = convert_to_mol_smarts(a_frags)
+    print("Found", len(a_mols), "archaea fragments")
     #
     # #Archaea smiles
     # fp = "Biology/Data/archaea_cpds.csv"
@@ -83,7 +99,7 @@ def main():
     # frag_count = []
     # frags_in_all_cpds = []
     # for cpd in tqdm(a_cpds):
-    #     count, frags_in_cpd = find_frags_in_cpds(cpd, a_frags)
+    #     count, frags_in_cpd = find_frags_in_cpds(cpd, a_mols)
     #     frag_count.append(count)
     #     frags_in_all_cpds.append(frags_in_cpd)
     #
@@ -93,9 +109,26 @@ def main():
     # pickle.dump(frags_in_all_cpds, open("Biology/Data/archaea_listOfAllFragsPerCpd.p", "wb"))
 
     ### Network of Compounds ###
-    frags_in_all_cpds = pickle.load(open("Biology/Data/archaea_listOfAllFragsPerCpd.p", "rb"))
+    # frags_in_all_cpds = pickle.load(open("Biology/Data/archaea_listOfAllFragsPerCpd.p", "rb"))
+    #
+    # pickle.dump(create_graph(frags_in_all_cpds), open("Biology/Data/archea_frag_network.p", "wb"))
 
-    pickle.dump(create_graph(frags_in_all_cpds), open("Biology/Data/archea_frag_network.p", "wb"))
+    ### Molecular Assembly fragment comparison ###
+    #Also check out https://stackoverflow.com/questions/51681659/how-to-use-rdkit-to-calculte-molecular-fingerprint-and-similarity-of-a-list-of-s for Tanimoto similarity values
+    fp = "Other/Assembly_Fragments/1Adenine_histWhole.txt" #adenine test
+    assembly_mols = get_assembly_frags(fp)
+
+    #Convert assembly fragments and archaea fragments into smiles
+    assembly_smiles = get_canonical_smiles(assembly_mols)
+    a_smiles = get_canonical_smiles(a_mols)
+    #Find overlap
+    overlap = [s for s in assembly_smiles if s in a_smiles]
+
+    #Find overlap between the two
+    print("Number of assembly fragments:", len(assembly_smiles))
+    print("Number of archaea fragments:", len(a_smiles))
+    print("Number of overlapping fragments:", len(overlap))
+    print(overlap)
 
 
 
