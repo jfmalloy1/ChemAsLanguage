@@ -1,4 +1,5 @@
 from rdkit import Chem
+from rdkit.Chem import AllChem
 import pandas as pd
 from tqdm import tqdm
 from scipy import stats
@@ -6,6 +7,8 @@ import pickle
 import networkx as nx
 from itertools import combinations
 import matplotlib.pyplot as plt
+import os
+import itertools
 
 """ Get smiles strings for a set of compounds
     Input: list of cpd ids for a given set of compounds
@@ -69,32 +72,57 @@ def create_graph(frags):
 """
 def get_assembly_frags(fp):
     lines = open(fp).readlines()
+    #Find beginning of inchi (next row after '$' character)
+    count = 0
+    for l in lines:
+        if "$" in l:
+            break
+        count += 1
+
     #Turn all inchi fragments into mol objects
-    return [Chem.MolFromInchi(i.strip()) for i in lines[37:] if "InChI" in i] #Note: Header takes 37 lines in this particular example
+    return [Chem.MolFromInchi(i.strip()) for i in lines[count:] if "InChI" in i] #Note: Header takes 37 lines in this particular example
 
 """ Convert a list of RDKit mol objects into (canonical) smiles
     Input: RDKit mol object list
     Output: list of canonical smiles
 """
 def get_canonical_smiles(mols):
-    return list(set([Chem.MolToSmiles(m) for m in mols]))
+    smiles = list(set([Chem.MolToSmiles(m) for m in mols]))
+    canon_smiles = []
+    for s in smiles:
+        try:
+            canon_smiles.append(Chem.CanonSmiles(s))
+        except:
+            print(s)
+    return canon_smiles
+
+""" Check if two molecules in a set (combo: (m1,m2)) are equal to each other
+    Checks through seeing if both have a substruct match with each other
+    Input: set of mol objects (m1,m2)
+    Output: True or False, depending on if they are equal (True) or not (False)
+"""
+def find_overlap(combo):
+    m1, m2 = combo
+    return m1.HasSubstructMatch(m2) and m2.HasSubstructMatch(m1)
 
 def main():
     ### Number of fragments in each compound ###
-    #Read in fragments (Archaea as a test)
-    fp = "Biology/Data/Archaea/Archaea0_fullOccurances.csv"
-    a_df = pd.read_csv(fp)
-    a_frags = a_df["Frags"].tolist() #Smarts strings found in archaea
+    #Read in fragments (Archaea & bacteria as a test)
+    fp = "Biology/Data/adenine_fragments.p"
+    #a_df = pd.read_csv(fp)
+    a_frags = pickle.load(open(fp, "rb")) #a_df["Frags"].tolist() #Smarts strings found in archaea
+    a_frags = [f for (m, f) in a_frags] #Separate mol files from fragments
     a_mols = convert_to_mol_smarts(a_frags)
-    print("Found", len(a_mols), "archaea fragments")
-    #
+    # a_smiles = get_canonical_smiles(a_mols) #Convert into smiles (for later comparison)
+    # print("Found", len(a_smiles), "adenine fragments")
+
     # #Archaea smiles
-    # fp = "Biology/Data/archaea_cpds.csv"
+    # fp = "Biology/Data/bacteria_cpds.csv"
     # a_cpds = get_smiles(fp) #Smiles strings of archaea cpds
     # a_cpds = [c for c in a_cpds if str(c) != 'nan'] #Remove nans
     # a_cpds = convert_to_mol_smiles(a_cpds)
-    # print("Found", len(a_cpds), "archea compounds")
-    #
+    # print("Found", len(a_cpds), "bacteria compounds")
+
     # #Find number of fragments in each compounds
     # frag_count = []
     # frags_in_all_cpds = []
@@ -105,32 +133,50 @@ def main():
     #
     # #Basic descriptive statistics
     # print(stats.describe(frag_count))
-    # pickle.dump(frag_count, open("Biology/Data/archaea_fragment_counts.p", "wb"))
-    # pickle.dump(frags_in_all_cpds, open("Biology/Data/archaea_listOfAllFragsPerCpd.p", "wb"))
-
-    ### Network of Compounds ###
-    # frags_in_all_cpds = pickle.load(open("Biology/Data/archaea_listOfAllFragsPerCpd.p", "rb"))
+    # pickle.dump(frag_count, open("Biology/Data/bacteria_fragment_counts.p", "wb"))
+    # pickle.dump(frags_in_all_cpds, open("Biology/Data/bacteria_listOfAllFragsPerCpd.p", "wb"))
     #
-    # pickle.dump(create_graph(frags_in_all_cpds), open("Biology/Data/archea_frag_network.p", "wb"))
+    # ## Network of Compounds ###
+    # frags_in_all_cpds = pickle.load(open("Biology/Data/bacteria_listOfAllFragsPerCpd.p", "rb"))
+    #
+    # #pickle.dump(create_graph(frags_in_all_cpds), open("Biology/Data/bacteria_frag_network.p", "wb"))
+    # G = create_graph(frags_in_all_cpds)
+    # nx.write_gexf(G, "Biology/Data/bacteria_frag_network.gexf")
 
     ### Molecular Assembly fragment comparison ###
     #Also check out https://stackoverflow.com/questions/51681659/how-to-use-rdkit-to-calculte-molecular-fingerprint-and-similarity-of-a-list-of-s for Tanimoto similarity values
+    df = pd.DataFrame(columns=["Name","Total Fragments","Overlapping Fragment Count","Overlapping Fragments"])
+
+    #for fp in [fp for fp in os.listdir("Other/Assembly_Fragments/") if ".txt" in fp]:
+
     fp = "Other/Assembly_Fragments/1Adenine_histWhole.txt" #adenine test
     assembly_mols = get_assembly_frags(fp)
 
-    #Convert assembly fragments and archaea fragments into smiles
-    assembly_smiles = get_canonical_smiles(assembly_mols)
-    a_smiles = get_canonical_smiles(a_mols)
-    #Find overlap
-    overlap = [s for s in assembly_smiles if s in a_smiles]
+    all_combinations = itertools.product(a_mols, assembly_mols)
+
+    # print(assembly_smiles)
+    #Find overlap - using dual substruct matching
+    overlap_count = 0
+    overlapping_frags = []
+    for combo in all_combinations:
+        if find_overlap(combo):
+            overlap_count += 1
+            m1, m2 = combo
+            overlapping_frags.append(Chem.MolToSmiles(m2))
 
     #Find overlap between the two
-    print("Number of assembly fragments:", len(assembly_smiles))
-    print("Number of archaea fragments:", len(a_smiles))
-    print("Number of overlapping fragments:", len(overlap))
-    print(overlap)
+    print(fp)
+    print("Number of assembly fragments:", len(assembly_mols))
+    print("Number of archaea fragments:", len(a_mols))
+    print("Number of overlapping fragments:", overlap_count)
+    print("Overlapping fragments: ", overlapping_frags)
 
 
+    #new_entry = {"Name":fp, "Total Fragments:": len(assembly_smiles), "Overlapping Fragment Count":len(overlap), "Overlapping Fragments":overlap}
+    df.loc[len(df)] = ["Adenine",len(assembly_mols),overlap_count,overlapping_frags]
+
+    print(df.head())
+    df.to_csv("Other/Assembly_Fragments/adenine_overlap.csv")
 
 if __name__ == "__main__":
     main()
