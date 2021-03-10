@@ -19,7 +19,7 @@ Progress
 
 This is an ongoing project as part of my graduate research at Arizona State Univeristy. Future plans are to:
 
-- Simplify the workflow for generating fragments from a list of user-specified chemical compounds (estimated data: Summer 2021)
+- Simplify the workflow for generating fragments from a list of user-specified chemical compounds (estimated date: Summer 2021)
 - Train a W2V model as part of the fragment generation process (estimated date: Fall 2021)
 - Release this code as a fully documented Python package (estimated data: Spring 2022)
 
