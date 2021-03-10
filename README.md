@@ -31,4 +31,4 @@ If you have questions, email me at: jfmalloy1@gmail.com
 License
 -------
 
-The project is licensed under the BSD license.
+The project is licensed under the MIT license.
