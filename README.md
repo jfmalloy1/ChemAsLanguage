@@ -1,7 +1,7 @@
-$ Chemistry as Language
+# Chemistry as Language
 ========
 
-$ ChemAsLang is a collection of resources which treats chemistry as language. It breaks sets of chemistry down into component parts (fragments), implements networks of fragments, and trains Word-to-Vector algorithms on fragments to track changes in chemistry over time.
+ChemAsLang is a collection of resources which treats chemistry as language. It breaks sets of chemistry down into component parts (fragments), implements networks of fragments, and trains Word-to-Vector algorithms on fragments to track changes in chemistry over time.
 
 Features
 --------
