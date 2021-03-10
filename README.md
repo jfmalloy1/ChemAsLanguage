@@ -6,27 +6,27 @@ ChemAsLang is a collection of resources which treats chemistry as language. It b
 Features
 --------
 
-- Be awesome
-- Make things faster
+- Utilizes RDKit generate chemical fragments
+- Uses Gensim to train Word-to-Vector models of fragments & chemical compounds
 
-Installation
+Usage
 ------------
+- To generate fragments: upload a set of chemicals (in SMILES or SMARTS format) to the `Fragments/Data` directory, edit `Fragments/common_frags_parallel.py` as necessary.
+- To train W2V: edit `Word2Vec/build_KEGG_gensim.py` as necessary.
 
-Install $project by running:
+Progress
+-------
 
-    install project
+This is an ongoing project as part of my graduate research at Arizona State Univeristy. Future plans are to:
 
-Contribute
-----------
-
-- Issue Tracker: github.com/$project/$project/issues
-- Source Code: github.com/$project/$project
+- Simplify the workflow for generating fragments from a list of user-specified chemical compounds (estimated data: Summer 2021)
+- Train a W2V model as part of the fragment generation process (estimated date: Fall 2021)
+- Release this code as a fully documented Python package (estimated data: Spring 2022)
 
 Support
 -------
 
-If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
+If you have questions, email me at: jfmalloy1@gmail.com
 
 License
 -------
