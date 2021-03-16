@@ -107,21 +107,21 @@ def find_overlap(combo):
 
 def main():
     ### Number of fragments in each compound ###
-    #Read in fragments (Archaea & bacteria as a test)
-    fp = "Biology/Data/adenine_fragments.p"
-    #a_df = pd.read_csv(fp)
-    a_frags = pickle.load(open(fp, "rb")) #a_df["Frags"].tolist() #Smarts strings found in archaea
-    a_frags = [f for (m, f) in a_frags] #Separate mol files from fragments
-    a_mols = convert_to_mol_smarts(a_frags)
+    # #Read in fragments (Archaea & bacteria as a test)
+    # fp = "Biology/Data/adenine_fragments.p"
+    # #a_df = pd.read_csv(fp)
+    # a_frags = pickle.load(open(fp, "rb")) #a_df["Frags"].tolist() #Smarts strings found in archaea
+    # a_frags = [f for (m, f) in a_frags] #Separate mol files from fragments
+    # a_mols = convert_to_mol_smarts(a_frags)
     # a_smiles = get_canonical_smiles(a_mols) #Convert into smiles (for later comparison)
     # print("Found", len(a_smiles), "adenine fragments")
 
-    # #Archaea smiles
-    # fp = "Biology/Data/bacteria_cpds.csv"
-    # a_cpds = get_smiles(fp) #Smiles strings of archaea cpds
-    # a_cpds = [c for c in a_cpds if str(c) != 'nan'] #Remove nans
-    # a_cpds = convert_to_mol_smiles(a_cpds)
-    # print("Found", len(a_cpds), "bacteria compounds")
+    #Archaea smiles
+    fp = "Biology/Data/archaea_cpds.csv"
+    a_cpds = get_smiles(fp) #Smiles strings of archaea cpds
+    a_cpds = [c for c in a_cpds if str(c) != 'nan'] #Remove nans
+    a_cpds = convert_to_mol_smiles(a_cpds)
+    print("Found", len(a_cpds), "archaea compounds")
 
     # #Find number of fragments in each compounds
     # frag_count = []

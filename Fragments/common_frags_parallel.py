@@ -72,11 +72,6 @@ def UniqSmarts(frags):
                           if not (sameMolecule((f,s),(g,t)))) # check if they are the same or not. check also on the string to speed up
     return result
 
-<<<<<<< HEAD
-def main():
-    # #Test: Time Fragments for 100 strings
-    # cpd_smiles = pickle.load(open("../Fragments/100k_RAND_SMILES/100k_smiles_0.p", "rb"))
-=======
 """ RDKit test on ASU agave cluster
     Input: None
     Output: None
@@ -125,7 +120,6 @@ def main():
 
     # #Test: Time Fragments for Earth atmosphere SMILES strings
     # cpd_smiles = open("Other/Earth_atmosphere_SMILES.txt", "rb").readlines()
->>>>>>> b83da4baf396f27183137ffc310f949fe000bcf5
 
     ## KEGG smiles (~18k smiles strings, therefore 158 million combinations)
     kegg_smiles = open("Biology/Data/kegg_smiles.txt")
@@ -134,40 +128,7 @@ def main():
     cpd_mols = [Chem.MolFromSmiles(smi.strip()) for smi in cpd_smiles]
     cpd_mols = [m for m in cpd_mols if m != None]
     print("Retieved",len(cpd_mols),"random molecules in sample")
-<<<<<<< HEAD
-
-
-    # start = time.time()
-    # frags = []
-    # for s in (fragments(cpd_mols)): #| loadSmarts(sys.argv[2])):
-    #     try:
-    #         frags.append((Chem.MolFromSmarts(s),s))
-    #     except:
-    #         print("AAAGGGHHH",s,"failed")
-    # frags=UniqSmarts(frags)
-    # print("Found", len(frags), "many fragments")
-    # print("Time:", time.time() - start)
-
-
-    #Define parallel computing
-    start = time.time()
-    pool = Pool(processes=24)
-    cpd_combinations = combinations(cpd_mols, 2)
-    frag_smarts = pool.map(findmcs, cpd_combinations)
-    frags = []
-    for s in (frag_smarts): #| loadSmarts(sys.argv[2])):
-        try:
-            frags.append((Chem.MolFromSmarts(s),s))
-        except:
-            pass
-    frags=UniqSmarts(frags)
-    print("Found", len(frags), "many fragments")
-    print("Time:", time.time() - start)
-
-    pickle.dump(frags, open("Biology/Data/KEGG_fragments.p", "wb"))
-=======
-    #
-    #
+    
     # # start = time.time()
     # # frags = []
     # # for s in (fragments(cpd_mols)): #| loadSmarts(sys.argv[2])):
