@@ -1,0 +1,87 @@
+Build Chemical Phylogenetic Tree. v1.0
+
+The molecule analysed is:
+InChI=1/C3H4O3/c1-2(4)3(5)6/h1H3,(H,5,6)/f/h5H
+    ||  C   #0  -->  0, 1, 4
+    ||  O   #3  -->  4
+    ||  C   #2  -->  1, 2, 3
+    ||  C   #4  -->  3
+    ||  O   #5  -->  2
+    ||  O   #1  -->  0
+    ||      0  *1 :  #1 -- #0
+    ||      1  *1 :  #2 -- #0
+    ||      4  *2 :  #3 -- #0
+    ||      2  *2 :  #2 -- #5
+    ||      3  *1 :  #4 -- #2
+
+. Total number of atoms: 10
+. When hydrogen atoms (H) are excluded:
+Number of atoms: 6
+Number of bonds: 5
+
+Parameter Nstep1 = 100000
+Elapsed time: 11.585 s
+==================================================
+======= The semi-whole fragments histogram =======
+==================================================
+$
+InChI=1/C2H4O/c1-2-3/h2H,1H3
+3:
+(1,2,)  (1,4,)  (2,3,)  
+
+InChI=1/CH2O2/c2-1-3/h1H,(H,2,3)/f/h2H
+1:
+(0,4,)  
+
+InChI=1/C2H6O/c1-2-3/h3H,2H2,1H3
+1:
+(0,1,)  
+
+InChI=1/C2H2O3/c3-1-2(4)5/h1H,(H,4,5)/f/h4H
+1:
+(0,1,2,4,)  
+
+InChI=1/C2H2O2/c3-1-2-4/h1-2H
+1:
+(1,2,4,)  
+
+InChI=1/C3H6O2/c1-3(5)2-4/h4H,2H2,1H3
+1:
+(0,1,2,3,)  
+
+InChI=1/C3H6O/c1-2-3-4/h3H,2H2,1H3
+1:
+(1,3,4,)  
+
+InChI=1/C3H4O3/c1-2(4)3(5)6/h1H3,(H,5,6)/f/h5H
+1:
+(0,1,2,3,4,)  
+
+InChI=1/C2H4O2/c1-2(3)4/h1H3,(H,3,4)/f/h3H
+1:
+(0,1,4,)  
+
+InChI=1/C3H6O2/c1-2-3(4)5/h2H2,1H3,(H,4,5)/f/h4H
+1:
+(0,1,3,4,)  
+
+InChI=1/C3H6O/c1-3(2)4/h1-2H3
+1:
+(1,2,3,)  
+
+InChI=1/C3H4O2/c1-3(5)2-4/h2H,1H3
+1:
+(1,2,3,4,)  
+
+InChI=1/C3H8/c1-3-2/h3H2,1-2H3
+1:
+(1,3,)  
+
+InChI=1/C3H8O/c1-2-3-4/h4H,2-3H2,1H3
+1:
+(0,1,3,)  
+
+InChI=1/C2H4O2/c3-1-2-4/h1,4H,2H2
+1:
+(0,1,2,)  
+

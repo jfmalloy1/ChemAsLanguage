@@ -1,0 +1,7 @@
+Fragments/Biology/Data/archea_frag_network.p
+*.gexf
+*.p
+*.csv
+*~
+*.ipynb_checkpoints
+*.DS_Store
