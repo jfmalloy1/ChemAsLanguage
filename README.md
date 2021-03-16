@@ -1,13 +1,4 @@
-<<<<<<< HEAD
-# ChemAsLanguage
-Analyze information content within chemistry, using linguistic tools
 
-## Purpose
-Use linguistic tools - graph grammar, word embeddings, etc.. - to track informational changes across chemistry
-
-### Contributions
-Word2Vect/functional_groups_smiles.txt taken from Cadaddeu et al, 2014
-=======
 # Chemistry as Language
 ========
 
@@ -42,4 +33,3 @@ License
 -------
 
 The project is licensed under the MIT license.
->>>>>>> b83da4baf396f27183137ffc310f949fe000bcf5
