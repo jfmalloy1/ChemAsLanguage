@@ -5,6 +5,7 @@ import pickle
 import time
 from tqdm import tqdm
 from itertools import combinations
+from random import sample
 
 
 """ Maximal common substring algorithm
@@ -114,6 +115,16 @@ def adenine_fragments(adenine_smiles, cpd_mols):
     #
     pickle.dump(frags, open("Biology/Data/adenine_fragments.p", "wb"))
 
+""" BACKUP METHOD: compares a specified number of pairwise molecules to generate Fragments
+    Input: list of mol objects, number of pairwise comparisons (n)
+    Output: fragments saved to a pickle file
+"""
+def random_fragment_generation(cpd_mols, n):
+    for i in range(n):
+        mols = sample(cpd_mols, 2)
+        frag = fmcstimeout(mols[0], mols[1])
+        print(frag)
+
 def main():
     # ### AGAVE TEST ###
     # agave_test()
@@ -128,8 +139,10 @@ def main():
     cpd_mols = [Chem.MolFromSmiles(smi.strip()) for smi in cpd_smiles]
     cpd_mols = [m for m in cpd_mols if m != None]
     print("Retieved",len(cpd_mols),"random molecules in sample")
-    #
-    #
+
+    ### BACKUP METHOD - in case paralleization doesn't work in time ###
+    random_fragment_generation(cpd_mols, 10)
+
     # # start = time.time()
     # # frags = []
     # # for s in (fragments(cpd_mols)): #| loadSmarts(sys.argv[2])):
@@ -144,7 +157,7 @@ def main():
     #
 
     ### ADENINE TEST (FOR ERNEST) ###
-    adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
+    #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
 
     # ### PARALLEL FRAGMENT GENERTION ###
     # start = time.time()
