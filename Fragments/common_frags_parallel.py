@@ -13,7 +13,7 @@ from random import sample
     Output: mol object of largest common substring
 """
 def fmcstimeout(p,q):
-    return MCS.FindMCS([p,q], timeout=1).smarts
+    return MCS.FindMCS([p,q], timeout=0.1).smarts
 
 """ Wrapper for MCS function
     Input: set of two mols (c)
@@ -141,7 +141,7 @@ def main():
     print("Retieved",len(cpd_mols),"random molecules in sample")
 
     ### BACKUP METHOD - in case paralleization doesn't work in time ###
-    random_fragment_generation(cpd_mols, 10)
+    #random_fragment_generation(cpd_mols, 10)
 
     # # start = time.time()
     # # frags = []
@@ -159,22 +159,26 @@ def main():
     ### ADENINE TEST (FOR ERNEST) ###
     #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
 
-    # ### PARALLEL FRAGMENT GENERTION ###
-    # start = time.time()
-    # pool = Pool(processes=32)
-    # cpd_combinations = combinations(cpd_mols, 2)
-    # frag_smarts = pool.map(findmcs, cpd_combinations)
-    # frags = []
-    # for s in (frag_smarts): #| loadSmarts(sys.argv[2])):
-    #     try:
-    #         frags.append((Chem.MolFromSmarts(s),s))
-    #     except:
-    #         pass
-    # frags=UniqSmarts(frags)
-    # print("Found", len(frags), "many fragments")
-    # print("Time:", time.time() - start)
-    # #
-    # pickle.dump(frags, open("Biology/Data/KEGG_fragments.p", "wb"))
+    ### PARALLEL FRAGMENT GENERTION ###
+    pool = Pool(processes=8)
+    ## Sample from kegg smiles - from 1k to 5k (initially)
+    for i in [3000, 4000, 5000]:
+        start = time.time()
+        mols = sample(cpd_mols, i) #Sample i compounds to make fragments
+        print(len(mols), "compounds being analyzed")
+        cpd_combinations = combinations(mols, 2)
+        frag_smarts = pool.map(findmcs, cpd_combinations)
+        frags = []
+        for s in (frag_smarts): #| loadSmarts(sys.argv[2])):
+            try:
+                frags.append((Chem.MolFromSmarts(s),s))
+            except:
+                pass
+        frags=UniqSmarts(frags)
+        print("Found", len(frags), "many fragments in", i, "compounds")
+        print("Time:", time.time() - start)
+        #
+        pickle.dump(frags, open("Biology/Data/KEGG_fragments_" + str(i) + "cpds.p", "wb"))
 
 if __name__ == "__main__":
     main()
