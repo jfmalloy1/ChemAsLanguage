@@ -5,6 +5,8 @@ from tqdm import tqdm
 import os
 import numpy as np
 from scipy import stats
+import pickle
+import random
 
 """ Create a list of mol representations (from rdkit) from a list of smarts strings
     Note: already unique (common_fragments.py takes care of removing duplicates)
@@ -92,11 +94,14 @@ def distribution_graph(h, i):
     plt.show()
 
 def main():
-    # ## Read in mol files of KEGG/domain/LUCA ##
-    # with open("../kegg_smiles.txt",'r') as smiles:
-    #     mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
-    #     mols = [m for m in mols if m != None]
-    #
+    ## Read in mol objects of KEGG ##
+    with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
+        mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+        mols = [m for m in mols if m != None]
+
+
+    #print(sample_frags)
+
     # #Read in pre-generated fragments from a file
     # frags = []
     # dirpath = "Tests/p85/"
@@ -107,22 +112,21 @@ def main():
     #
     # # ## Find repeatability ##
     # # base_frags(frags)
+
+    ## Find distribution of a fragment sample over full database ##
+    for label in ["1000cpds", "2000cpds", "3000cpds", "4000cpds", "5000cpds"]:
+        print(label)
+        sample_frags = pickle.load(open("Biology/Data/KEGG_fragments_" + label + ".p", "rb"))
+        h = mol_count(mols, sample_frags)
+
+        pickle.dump(h, open("Biology/Data/KEGG_fragments_" + label + "_occurances.p", "wb"))
+
+    # ## Find pre-made distribution over random molecule set ##
+    # h = pd.read_csv("Tests/Hundred_cpds_random_subsampleOccurances/dup_0_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
+    # print(h)
+    # distribution_graph(h, 0)
     #
-    # ## Find distribution over full database ##
-    # for i in range(len(frags)):
-    #     #Turn smarts list into list of sets (mol, smarts)
-    #     f = mol_from_smarts(frags[i])
-    #     #Find histogram of frag occurances
-    #     h = mol_count(mols, f)
-    #     #Graph things
-    #     distribution_graph(h, i)
-
-    ## Find pre-made distribution over random molecule set ##
-    h = pd.read_csv("Tests/Hundred_cpds_random_subsampleOccurances/dup_0_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
-    print(h)
-    distribution_graph(h, 0)
-
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":

@@ -162,7 +162,7 @@ def main():
     ### PARALLEL FRAGMENT GENERTION ###
     pool = Pool(processes=8)
     ## Sample from kegg smiles - from 1k to 5k (initially)
-    for i in [3000, 4000, 5000]:
+    for i in [1000, 2000, 3000, 4000, 5000]:
         start = time.time()
         mols = sample(cpd_mols, i) #Sample i compounds to make fragments
         print(len(mols), "compounds being analyzed")
