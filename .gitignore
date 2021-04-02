@@ -6,3 +6,4 @@ Fragments/Biology/Data/archea_frag_network.p
 *.ipynb_checkpoints
 *.DS_Store
 *.err
+*.txt
