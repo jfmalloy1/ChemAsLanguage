@@ -93,12 +93,24 @@ def distribution_graph(h, i):
     plt.legend
     plt.show()
 
-def main():
-    ## Read in mol objects of KEGG ##
-    with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
-        mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
-        mols = [m for m in mols if m != None]
+""" Convert a pickled distribution to csv format
+    Input: None (assumes pickled files are in Biology/Data/KEGG_Samples directory)
+    Output: csv file (same location) of data
+"""
+def convert_dist_toCSV():
+    for label in ["1000cpds", "2000cpds", "3000cpds", "4000cpds"]:#, "5000cpds"]:
+        print(label)
+        sample_frags = pickle.load(open("Biology/Data/KEGG_Samples/KEGG_fragments_" + label + "_occurances.p", "rb"))
+        df = pd.DataFrame.from_dict(sample_frags, orient="index", columns=["Occurances"])
+        df["Fragments"] = df.index
+        df = df.reset_index(drop=True)
+        df.to_csv("Biology/Data/KEGG_Samples/KEGG_fragments_" + label + "_occurances.csv")
 
+def main():
+    # ## Read in mol objects of KEGG ##
+    # with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
+    #     mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+    #     mols = [m for m in mols if m != None]
 
     #print(sample_frags)
 
@@ -113,13 +125,15 @@ def main():
     # # ## Find repeatability ##
     # # base_frags(frags)
 
-    ## Find distribution of a fragment sample over full database ##
-    for label in ["1000cpds", "2000cpds", "3000cpds", "4000cpds", "5000cpds"]:
-        print(label)
-        sample_frags = pickle.load(open("Biology/Data/KEGG_fragments_" + label + ".p", "rb"))
-        h = mol_count(mols, sample_frags)
+    # ## Find distribution of a fragment sample over full database ##
+    # for label in ["1000cpds", "2000cpds", "3000cpds", "4000cpds", "5000cpds"]:
+    #     print(label)
+    #     sample_frags = pickle.load(open("Biology/Data/KEGG_fragments_" + label + ".p", "rb"))
+    #     h = mol_count(mols, sample_frags)
+    #
+    #     pickle.dump(h, open("Biology/Data/KEGG_fragments_" + label + "_occurances.p", "wb"))
 
-        pickle.dump(h, open("Biology/Data/KEGG_fragments_" + label + "_occurances.p", "wb"))
+    convert_dist_toCSV()
 
     # ## Find pre-made distribution over random molecule set ##
     # h = pd.read_csv("Tests/Hundred_cpds_random_subsampleOccurances/dup_0_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
