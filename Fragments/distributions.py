@@ -98,7 +98,7 @@ def distribution_graph(h, i):
     Output: csv file (same location) of data
 """
 def convert_dist_toCSV():
-    for label in ["1000cpds", "2000cpds", "3000cpds", "4000cpds"]:#, "5000cpds"]:
+    for label in ["5000cpds"]:#["1000cpds", "2000cpds", "3000cpds", "4000cpds"]:#, "5000cpds"]:
         print(label)
         sample_frags = pickle.load(open("Biology/Data/KEGG_Samples/KEGG_fragments_" + label + "_occurances.p", "rb"))
         df = pd.DataFrame.from_dict(sample_frags, orient="index", columns=["Occurances"])
