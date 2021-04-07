@@ -166,7 +166,7 @@ def main():
         print("Iteration", i)
         for j in [1000]:#, 2000, 3000, 4000, 5000]:
             start = time.time()
-            mols = sample(cpd_mols, i) #Sample i compounds to make fragments
+            mols = sample(cpd_mols, j) #Sample i compounds to make fragments
             print(len(mols), "compounds being analyzed")
             cpd_combinations = combinations(mols, 2)
             frag_smarts = pool.map(findmcs, cpd_combinations)
@@ -177,10 +177,10 @@ def main():
                 except:
                     pass
             frags=UniqSmarts(frags)
-            print("Found", len(frags), "many fragments in", i, "compounds")
+            print("Found", len(frags), "many fragments in", j, "compounds")
             print("Time:", time.time() - start)
             #
-            pickle.dump(frags, open("Biology/Data/KEGG_fragments_" + str(i) + "cpds_iter" + str(i) + ".p", "wb"))
+            pickle.dump(frags, open("Biology/Data/KEGG_fragments_" + str(j) + "cpds_iter" + str(i) + ".p", "wb"))
 
 if __name__ == "__main__":
     main()
