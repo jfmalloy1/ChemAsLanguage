@@ -22,11 +22,11 @@ def fmcstimeout(p,q):
 def findmcs(c):
     p,q = c
     #@timeout(2)
-    try:
-        return fmcstimeout(p,q)
-    except:
-        print("MCS of", p, "and", q, "timed out.")
-        pass
+    #try:
+    return fmcstimeout(p,q)
+    # except:
+    #     print("MCS of", p, "and", q, "timed out.")
+    #     pass
 
 """ Finds the fragments within a set of mol objects
     Input: A set of rdkit mol objects
@@ -170,18 +170,9 @@ def main():
     print(len(cpd_mols), "compounds being analyzed")
     cpd_combinations = combinations(cpd_mols, 2)
     frag_smarts = pool.map(findmcs, cpd_combinations)
-    print("Found", len(frag_smarts), "possible fragments in", time.time() - start, "seconds")
-    #Save smarts fragments
-    pickle.dump(frag_smarts, open("Biology/Data/KEGG_fragments_full_smarts.p", "wb"))
-    #frag_smarts = map(findmcs, cpd_combinations) #serial version
-
-    #Load fragments back & find unique fragments
-    frag_smarts = pickle.load(open("Biology/Data/KEGG_fragments_full_smarts.p", "rb"))
-    print("Time to load:", time.time() - start)
-    #Remove fragments with the same smarts strings
-    frag_smarts = list(set(frag_smarts))
+    # frag_smarts = map(findmcs, cpd_combinations) #serial version
     frags = []
-    for s in tqdm((frag_smarts)): #| loadSmarts(sys.argv[2])):
+    for s in (frag_smarts): #| loadSmarts(sys.argv[2])):
         try:
             frags.append((Chem.MolFromSmarts(s),s))
         except:

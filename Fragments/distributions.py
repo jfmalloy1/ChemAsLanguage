@@ -98,19 +98,19 @@ def distribution_graph(h, i):
     Output: csv file (same location) of data
 """
 def convert_dist_toCSV():
-    for label in ["5000cpds"]:#["1000cpds", "2000cpds", "3000cpds", "4000cpds"]:#, "5000cpds"]:
-        print(label)
-        sample_frags = pickle.load(open("Biology/Data/KEGG_Samples/KEGG_fragments_" + label + "_occurances.p", "rb"))
-        df = pd.DataFrame.from_dict(sample_frags, orient="index", columns=["Occurances"])
-        df["Fragments"] = df.index
-        df = df.reset_index(drop=True)
-        df.to_csv("Biology/Data/KEGG_Samples/KEGG_fragments_" + label + "_occurances.csv")
+    # for label in ["5000cpds"]:#["1000cpds", "2000cpds", "3000cpds", "4000cpds"]:#, "5000cpds"]:
+    #     print(label)
+    sample_frags = pickle.load(open("Biology/Data/KEGG_fragments_full_occurances.p", "rb"))
+    df = pd.DataFrame.from_dict(sample_frags, orient="index", columns=["Occurances"])
+    df["Fragments"] = df.index
+    df = df.reset_index(drop=True)
+    df.to_csv("Biology/Data/KEGG_Samples/KEGG_fragments_full_occurances.csv")
 
 def main():
-    # ## Read in mol objects of KEGG ##
-    # with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
-    #     mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
-    #     mols = [m for m in mols if m != None]
+    ## Read in mol objects of KEGG ##
+    with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
+        mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+        mols = [m for m in mols if m != None]
 
     #print(sample_frags)
 
@@ -128,10 +128,10 @@ def main():
     # ## Find distribution of a fragment sample over full database ##
     # for label in ["1000cpds", "2000cpds", "3000cpds", "4000cpds", "5000cpds"]:
     #     print(label)
-    #     sample_frags = pickle.load(open("Biology/Data/KEGG_fragments_" + label + ".p", "rb"))
-    #     h = mol_count(mols, sample_frags)
-    #
-    #     pickle.dump(h, open("Biology/Data/KEGG_fragments_" + label + "_occurances.p", "wb"))
+    frags = pickle.load(open("Biology/Data/KEGG_fragments_full.p", "rb"))
+    h = mol_count(mols, frags)
+
+    pickle.dump(h, open("Biology/Data/KEGG_fragments_full_occurances.p", "wb"))
 
     convert_dist_toCSV()
 
