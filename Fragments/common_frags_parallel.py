@@ -5,6 +5,7 @@ import pickle
 import time
 from tqdm import tqdm
 from itertools import combinations
+from itertools import repeat
 from random import sample
 
 
@@ -13,7 +14,7 @@ from random import sample
     Output: mol object of largest common substring
 """
 def fmcstimeout(p,q):
-    return MCS.FindMCS([p,q], timeout=0.001).smarts
+    return MCS.FindMCS([p,q], timeout=1).smarts
 
 """ Wrapper for MCS function
     Input: set of two mols (c)
@@ -22,11 +23,11 @@ def fmcstimeout(p,q):
 def findmcs(c):
     p,q = c
     #@timeout(2)
-    try:
-        return fmcstimeout(p,q)
-    except:
-        print("MCS of", p, "and", q, "timed out.")
-        pass
+    # try:
+    return fmcstimeout(p,q)
+    # except:
+    #     print("MCS of", p, "and", q, "timed out.")
+    #     pass
 
 """ Finds the fragments within a set of mol objects
     Input: A set of rdkit mol objects
@@ -159,27 +160,32 @@ def main():
     ### ADENINE TEST (FOR ERNEST) ###
     #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
 
-    ### PARALLEL FRAGMENT GENERTION ###
-    pool = Pool(processes=10)
-    # ## Sample from kegg smiles - from 1k to 5k (initially)
-    # # for i in range(10): #Iteration testing for Adrianna
-    #     # print("Iteration", i)
-    # for j in [1000]:#, 2000, 3000, 4000, 5000]:
-    start = time.time()
-    #mols = sample(cpd_mols, j) #Sample i compounds to make fragments
-    print(len(cpd_mols), "compounds being analyzed")
-    cpd_combinations = combinations(cpd_mols, 2)
-    frag_smarts = pool.map(findmcs, cpd_combinations)
-    print("Found", len(frag_smarts), "possible fragments in", time.time() - start, "seconds")
-    #Save smarts fragments
-    pickle.dump(frag_smarts, open("Biology/Data/KEGG_fragments_full_smarts.p", "wb"))
-    #frag_smarts = map(findmcs, cpd_combinations) #serial version
+    # ### PARALLEL FRAGMENT GENERTION ###
+    # pool = Pool(processes=5)
+    # # ## Sample from kegg smiles - from 1k to 5k (initially)
+    # # # for i in range(10): #Iteration testing for Adrianna
+    # #     # print("Iteration", i)
+    # # for j in [1000]:#, 2000, 3000, 4000, 5000]:
+    #
+    # ## Test timeout parameters
+    # s = 1000 #Sample 1000 KEGG compounds at a time
+    # for i in range(10): #Run each timeout test 10 times
+    #     start = time.time()
+    #     mols = sample(cpd_mols, s) #Sample s compounds to make fragments
+    #     print(len(mols), "compounds being analyzed with timeout = 1, iteration =", i)
+    #     cpd_combinations = combinations(mols, 2)
+    #     frag_smarts = pool.map(findmcs, cpd_combinations)
+    #     print("Found", len(frag_smarts), "possible fragments in", time.time() - start, "seconds")
+    #     #Save smarts fragments
+    #     pickle.dump(frag_smarts, open("Biology/Data/Tests/Timeout/KEGG_fragments_1000samples_timeout1_iter" + str(i) + "smarts.p", "wb"))
+    #     #frag_smarts = map(findmcs, cpd_combinations) #serial version
 
     #Load fragments back & find unique fragments
+    start = time.time()
     frag_smarts = pickle.load(open("Biology/Data/KEGG_fragments_full_smarts.p", "rb"))
     print("Time to load:", time.time() - start)
-    #Remove fragments with the same smarts strings
-    frag_smarts = list(set(frag_smarts))
+    # #Remove fragments with the same smarts strings
+    # frag_smarts = list(set(frag_smarts))
     frags = []
     for s in tqdm((frag_smarts)): #| loadSmarts(sys.argv[2])):
         try:
@@ -190,7 +196,7 @@ def main():
     print("Found", len(frags), "many fragments in all compounds")
     print("Time:", time.time() - start)
         #
-    pickle.dump(frags, open("Biology/Data/KEGG_fragments_full.p", "wb"))
+    pickle.dump(frags, open("Biology/Data/KEGG_fragments_full_noSet.p", "wb"))
 
 if __name__ == "__main__":
     main()
