@@ -220,7 +220,7 @@ def main():
     # cpd_smiles = open("Other/Earth_atmosphere_SMILES.txt", "rb").readlines()
 
     ### Get KEGG Mol Objects ###
-    # kegg_mols = read_KEGG_mols()
+    kegg_mols = read_KEGG_mols()
 
     ### Get Reaxys Mol Objects ###
     #Read in full reaction database
