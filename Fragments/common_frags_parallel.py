@@ -1,6 +1,8 @@
 from multiprocessing import Pool
 from rdkit import Chem
 from rdkit.Chem import MCS
+from rdkit import RDLogger
+import pandas as pd
 import pickle
 import time
 from tqdm import tqdm
@@ -148,7 +150,7 @@ def read_KEGG_mols():
 def generate_fragments(pool, mols, output_fp):
     start = time.time()
     print(len(mols), "compounds being analyzed")
-    cpd_combinations = combinations(cpd_mols, 2) #Generate combinations
+    cpd_combinations = combinations(mols, 2) #Generate combinations
     frag_smarts = pool.map(findmcs, cpd_combinations) #Find fragments in parallel
     print("Found", len(frag_smarts), "possible fragments in", time.time() - start, "seconds")
     #Save smarts fragments
@@ -179,6 +181,37 @@ def find_unique_frags(input_fp, output_fp):
 
     pickle.dump(frags, open(output_fp, "wb"))
 
+""" Creates a dataframe from the Reaxys subset number n between 1-10
+    Input: the number of the specific section of the database
+    Output: dataframe containing all of Reaxys smiles strings
+"""
+def read_cpds(n):
+    start = time.time()
+    df = pd.read_csv("~/Shared/Reaxys/cpd_"+n+".csv", header=None, usecols=[31])
+
+    df.columns=["smiles"]
+    end = time.time()
+    print("Time for " + n + ":", end-start)
+    return df
+
+""" Read and sample Reaxys, given a specific sample size. Assumes Reaxys is in a specific directory.
+    Input: Reaxys dataframe, sample size (s)
+    Output: list of RDKit mol objects
+"""
+def sample_Reaxys(df, s):
+    #Remove rdkit warnings
+    RDLogger.DisableLog('rdApp.*')
+
+    #Sample given sample size s
+    smiles = df.sample(frac=s/len(df.index))["smiles"].tolist()
+    smiles = list(map(str, smiles))
+
+    #Convert all sampled smiles strings into mols
+    mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+    mols = [m for m in mols if m != None]
+    print("Retieved",len(mols),"random molecules")
+    return mols
+
 def main():
     # ### AGAVE TEST ###
     # agave_test()
@@ -187,26 +220,31 @@ def main():
     # cpd_smiles = open("Other/Earth_atmosphere_SMILES.txt", "rb").readlines()
 
     ### Get KEGG Mol Objects ###
-    cpd_mols = read_KEGG_mols()
+    # kegg_mols = read_KEGG_mols()
 
-    ### ADENINE TEST (FOR ERNEST) ###
-    #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
+    ### Get Reaxys Mol Objects ###
+    #Read in full reaction database
+    df = pd.DataFrame()
+    for i in range(1,11):
+        df = df.append(read_cpds(str(i)), ignore_index=True)
+        print("Done with subset", i, "...")
+        print("Df size", len(df.index))
 
-    ### PARALLEL FRAGMENT GENERTION ###
-    pool = Pool(processes=16)
-    # # ## Sample from kegg smiles - from 1k to 5k (initially)
-    # # # for i in range(10): #Iteration testing for Adrianna
-    # #     # print("Iteration", i)
-    # # for j in [1000]:#, 2000, 3000, 4000, 5000]:
-    #
-    # ## Test timeout parameters
-    # s = 1000 #Sample 1000 KEGG compounds at a time
-    # for i in range(10): #Run each timeout test 10 times
-    # #mols = sample(cpd_mols, s) #Sample s compounds to make fragments
-    generate_fragments(pool, cpd_mols, "Biology/Data/KEGG_fragments_full_occurances_t01_smarts.p")
+    kegg_size = len(kegg_mols)
+    del kegg_mols
+    for i in range(10):
+        reaxys_mols = sample_Reaxys(df, kegg_size)
 
-    ### FIND UNIQUE FRAGMENTS ###
-    find_unique_frags("Biology/Data/KEGG_fragments_full_occurances_t01_smarts.p", "Biology/Data/KEGG_fragments_full_occurances_t01_smarts" + "_unique.p")
+        ### ADENINE TEST (FOR ERNEST) ###
+        #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
+
+        ### PARALLEL FRAGMENT GENERTION ###
+        pool = Pool(processes=16)
+
+        generate_fragments(pool, reaxys_mols, "Technology/Data/Reaxys_fragments_keggSize_" + str(i) + ".p")
+
+        ### FIND UNIQUE FRAGMENTS ###
+        find_unique_frags("Technology/Data/Reaxys_fragments_keggSize_" + str(i) + ".p", "Technology/Data/Reaxys_fragments_keggSize_0" + str(i) + "_unique.p")
 
 if __name__ == "__main__":
     main()
