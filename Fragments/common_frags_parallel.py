@@ -7,6 +7,7 @@ from tqdm import tqdm
 from itertools import combinations
 from itertools import repeat
 from random import sample
+import os
 
 
 """ Maximal common substring algorithm
@@ -14,7 +15,7 @@ from random import sample
     Output: mol object of largest common substring
 """
 def fmcstimeout(p,q):
-    return MCS.FindMCS([p,q], timeout=1).smarts
+    return MCS.FindMCS([p,q], timeout=0.01).smarts
 
 """ Wrapper for MCS function
     Input: set of two mols (c)
@@ -126,13 +127,11 @@ def random_fragment_generation(cpd_mols, n):
         frag = fmcstimeout(mols[0], mols[1])
         print(frag)
 
-def main():
-    # ### AGAVE TEST ###
-    # agave_test()
-
-    # #Test: Time Fragments for Earth atmosphere SMILES strings
-    # cpd_smiles = open("Other/Earth_atmosphere_SMILES.txt", "rb").readlines()
-
+""" Read in KEGG mol objects
+    Input: None (assumes list of all KEGG smiles strings is in "Biology/Data/kegg_smiles.txt")
+    Output: List of RDKit mol objects of all of KEGG
+"""
+def read_KEGG_mols():
     ## KEGG smiles (~18k smiles strings, therefore 158 million combinations)
     kegg_smiles = open("Biology/Data/kegg_smiles.txt")
     cpd_smiles = kegg_smiles.readlines()
@@ -140,28 +139,61 @@ def main():
     cpd_mols = [Chem.MolFromSmiles(smi.strip()) for smi in cpd_smiles]
     cpd_mols = [m for m in cpd_mols if m != None]
     print("Retieved",len(cpd_mols),"random molecules in sample")
+    return cpd_mols
 
-    ### BACKUP METHOD - in case paralleization doesn't work in time ###
-    #random_fragment_generation(cpd_mols, 10)
+""" Generate fragments in parallel
+    Input: pool (parallelization), mols (list of mol objects to be used), output_fp (filepath to place fragments)
+    Output: fragments in a pickled file
+"""
+def generate_fragments(pool, mols, output_fp):
+    start = time.time()
+    print(len(mols), "compounds being analyzed")
+    cpd_combinations = combinations(cpd_mols, 2) #Generate combinations
+    frag_smarts = pool.map(findmcs, cpd_combinations) #Find fragments in parallel
+    print("Found", len(frag_smarts), "possible fragments in", time.time() - start, "seconds")
+    #Save smarts fragments
+    pickle.dump(frag_smarts, open(output_fp, "wb"))
 
-    # # start = time.time()
-    # # frags = []
-    # # for s in (fragments(cpd_mols)): #| loadSmarts(sys.argv[2])):
-    # #     try:
-    # #         frags.append((Chem.MolFromSmarts(s),s))
-    # #     except:
-    # #         print("AAAGGGHHH",s,"failed")
-    # # frags=UniqSmarts(frags)
-    # # print("Found", len(frags), "many fragments")
-    # # print("Time:", time.time() - start)
-    #
-    #
+""" Find the unique fragments in a set
+    Input: input filepath (assumes this is a pickled list of fragments in SMARTS form), output filepath
+    Output: List of unique fragments in pickled form
+"""
+def find_unique_frags(input_fp, output_fp):
+    start = time.time()
+    print("Analyzing:", input_fp)
+    frag_smarts = pickle.load(open(input_fp, "rb"))
+    print("Time to load:", time.time() - start)
+    #Remove fragments with the same smarts strings
+    print("Found", len(frag_smarts), "original fragments")
+    frag_smarts = list(set(frag_smarts))
+    print("Found", len(frag_smarts), "fragments after removing duplicate SMARTS")
+    frags = []
+    for s in tqdm((frag_smarts)): #| loadSmarts(sys.argv[2])):
+        try:
+            frags.append((Chem.MolFromSmarts(s),s))
+        except:
+            pass
+    frags=UniqSmarts(frags)
+    print("Found", len(frags), "many unique fragments")
+    print("Time:", time.time() - start)
+
+    pickle.dump(frags, open(output_fp, "wb"))
+
+def main():
+    # ### AGAVE TEST ###
+    # agave_test()
+
+    # #Test: Time Fragments for Earth atmosphere SMILES strings
+    # cpd_smiles = open("Other/Earth_atmosphere_SMILES.txt", "rb").readlines()
+
+    ### Get KEGG Mol Objects ###
+    cpd_mols = read_KEGG_mols()
 
     ### ADENINE TEST (FOR ERNEST) ###
     #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
 
-    # ### PARALLEL FRAGMENT GENERTION ###
-    # pool = Pool(processes=5)
+    ### PARALLEL FRAGMENT GENERTION ###
+    pool = Pool(processes=16)
     # # ## Sample from kegg smiles - from 1k to 5k (initially)
     # # # for i in range(10): #Iteration testing for Adrianna
     # #     # print("Iteration", i)
@@ -170,33 +202,11 @@ def main():
     # ## Test timeout parameters
     # s = 1000 #Sample 1000 KEGG compounds at a time
     # for i in range(10): #Run each timeout test 10 times
-    #     start = time.time()
-    #     mols = sample(cpd_mols, s) #Sample s compounds to make fragments
-    #     print(len(mols), "compounds being analyzed with timeout = 1, iteration =", i)
-    #     cpd_combinations = combinations(mols, 2)
-    #     frag_smarts = pool.map(findmcs, cpd_combinations)
-    #     print("Found", len(frag_smarts), "possible fragments in", time.time() - start, "seconds")
-    #     #Save smarts fragments
-    #     pickle.dump(frag_smarts, open("Biology/Data/Tests/Timeout/KEGG_fragments_1000samples_timeout1_iter" + str(i) + "smarts.p", "wb"))
-    #     #frag_smarts = map(findmcs, cpd_combinations) #serial version
+    # #mols = sample(cpd_mols, s) #Sample s compounds to make fragments
+    generate_fragments(pool, cpd_mols, "Biology/Data/KEGG_fragments_full_occurances_t01_smarts.p")
 
-    #Load fragments back & find unique fragments
-    start = time.time()
-    frag_smarts = pickle.load(open("Biology/Data/KEGG_fragments_full_smarts.p", "rb"))
-    print("Time to load:", time.time() - start)
-    # #Remove fragments with the same smarts strings
-    # frag_smarts = list(set(frag_smarts))
-    frags = []
-    for s in tqdm((frag_smarts)): #| loadSmarts(sys.argv[2])):
-        try:
-            frags.append((Chem.MolFromSmarts(s),s))
-        except:
-            pass
-    frags=UniqSmarts(frags)
-    print("Found", len(frags), "many fragments in all compounds")
-    print("Time:", time.time() - start)
-        #
-    pickle.dump(frags, open("Biology/Data/KEGG_fragments_full_noSet.p", "wb"))
+    ### FIND UNIQUE FRAGMENTS ###
+    find_unique_frags("Biology/Data/KEGG_fragments_full_occurances_t01_smarts.p", "Biology/Data/KEGG_fragments_full_occurances_t01_smarts" + "_unique.p")
 
 if __name__ == "__main__":
     main()

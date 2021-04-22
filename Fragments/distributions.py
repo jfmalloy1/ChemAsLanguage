@@ -7,6 +7,8 @@ import numpy as np
 from scipy import stats
 import pickle
 import random
+from multiprocessing import Pool
+import time
 
 """ Create a list of mol representations (from rdkit) from a list of smarts strings
     Note: already unique (common_fragments.py takes care of removing duplicates)
@@ -19,7 +21,7 @@ def mol_from_smarts(smarts):
         try:
             frags.append((Chem.MolFromSmarts(s),s))
         except:
-            print(s, " failed")
+            pass
 
     return frags
 
@@ -36,6 +38,19 @@ def mol_count(mols, frags):
             if m.HasSubstructMatch(f):
                 h[s] += 1
     return h
+
+""" Parallel version of mol_count
+    Inputs: list of mol representations of overall distribution, individual fragment to be counted
+    Output: list of smarts string & count (will be converted to dictionary later)
+"""
+def mol_count_parallel(mols, frag):
+    count = 0
+    f,s = frag
+    for m in mols:
+        if m.HasSubstructMatch(f):
+            count += 1
+
+    return [s, count]
 
 """ Find the base fragments - those that appear in all splits
     Input: list of lists of fragments. Overarching list - all splits, each sublist - fragments within that split
@@ -94,31 +109,41 @@ def distribution_graph(h, i):
     plt.show()
 
 """ Convert a pickled distribution to csv format
-    Input: None (assumes pickled files are in Biology/Data/KEGG_Samples directory)
+    Input: File path to a pickled dictionary
     Output: csv file (same location) of data
 """
-def convert_dist_toCSV():
+def convert_dist_toCSV(fp):
     # for label in ["5000cpds"]:#["1000cpds", "2000cpds", "3000cpds", "4000cpds"]:#, "5000cpds"]:
     #     print(label)
-    sample_frags = pickle.load(open("Biology/Data/KEGG_fragments_full_occurances.p", "rb"))
+    sample_frags = pickle.load(open(fp, "rb"))
     df = pd.DataFrame.from_dict(sample_frags, orient="index", columns=["Occurances"])
     df["Fragments"] = df.index
     df = df.reset_index(drop=True)
-    df.to_csv("Biology/Data/KEGG_fragments_full_occurances.csv")
+    df.to_csv(fp[:-2] + ".csv")
 
 def main():
-    # ## Read in mol objects of KEGG ##
+    # # ## Read in mol objects of KEGG ##
     # with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
     #     mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
     #     mols = [m for m in mols if m != None]
+    #
+    # # Parallel Occurances calculations
+    # pool = Pool(processes=10)
+    # dirpath = "Biology/Data/Tests/Timeout/"
+    # for file in os.listdir(dirpath): #For reading in all fragments
+    #     if file.endswith("_unique.p"): #ensure only unique fragment sets are counted
+    #         start = time.time()
+    #         fp = dirpath + file
+    #         print("Analyzing:", fp)
+    #         frags = pickle.load(open(fp, "rb")) #Load in fragments
+    #         print("Analyzing", len(frags), "fragments")
+    #         frag_occurances = []
+    #         frag_occurances = pool.starmap(mol_count_parallel, tqdm(zip([mols]*len(frags), frags), total=len(frags))) #Parallel occurances calculations
+    #         h = {f[0]: f[1] for f in frag_occurances} #Convert list of lists into dictionary
+    #         pickle.dump(h, open(dirpath + file[:-2] + "_occurances.p", "wb")) #Save dictionary to new pickle file
+    #         print("Time:", time.time() - start)
+    #         print()
 
-    #print(sample_frags)
-
-    # #Read in pre-generated fragments from a file
-    # frags = []
-    # dirpath = "Tests/p85/"
-    # # for file in os.listdir(dirpath): #For reading in all fragments
-    # #     fp = dirpath + file
     # with open("Tests/Hundred_cpds/dup_100cpds_0.txt") as f:
     #     frags.append([line.rstrip('\n') for line in f])
     #
@@ -133,7 +158,9 @@ def main():
     #
     # pickle.dump(h, open("Biology/Data/KEGG_fragments_full_occurances.p", "wb"))
 
-    convert_dist_toCSV()
+    for f in os.listdir("Biology/Data/Tests/Timeout/"):
+        if f.endswith("_occurances.p"):
+            convert_dist_toCSV("Biology/Data/Tests/Timeout/" + f)
 
     # ## Find pre-made distribution over random molecule set ##
     # h = pd.read_csv("Tests/Hundred_cpds_random_subsampleOccurances/dup_0_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
