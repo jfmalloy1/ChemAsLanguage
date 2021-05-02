@@ -47,35 +47,13 @@ def fragments(mols):
 
     return set(s)
 
-
-""" Tests if two fragments are the same """
-def sameMolecule(a,b):
-    def same_or_timeout(a,b):
-        if a[1] == b[1] : return True #string compare
-        if a[0].GetNumAtoms() != b[0].GetNumAtoms() : return False
-        if a[0].GetNumBonds() != b[0].GetNumBonds() : return False
-        return a[0].HasSubstructMatch(b[0]) and b[0].HasSubstructMatch(a[0])
-
-    try :
-        res = same_or_timeout(a,b)
-    except:
-        res = False
-
-    return res
-
-""" Ensures unique fragments
-    Input: set of fragments
-    Output: unique set of fragments
-"""
-def UniqSmarts(frags):
-    result = set()
-    frags = set((g,t) for (g,t) in frags if g != None) # was successfully converted to smarts
-    while frags:
-        f,s = frags.pop()
-        result.add((f,s))
-        frags = set((g,t) for (g,t) in frags
-                          if not (sameMolecule((f,s),(g,t)))) # check if they are the same or not. check also on the string to speed up
-    return result
+""" Tests if two mol objects (generated from fragments) are the same """
+def same_or_timeout(c):
+    a,b = c
+    if a.HasSubstructMatch(b) and b.HasSubstructMatch(a):
+        return (Chem.MolToSmarts(a),Chem.MolToSmarts(b))
+    else:
+        return False
 
 """ RDKit test on ASU agave cluster
     Input: None
@@ -160,26 +138,49 @@ def generate_fragments(pool, mols, output_fp):
     Input: input filepath (assumes this is a pickled list of fragments in SMARTS form), output filepath
     Output: List of unique fragments in pickled form
 """
-def find_unique_frags(input_fp, output_fp):
+def find_unique_frags(pool, input_fp, output_fp):
     start = time.time()
     print("Analyzing:", input_fp)
     frag_smarts = pickle.load(open(input_fp, "rb"))
     print("Time to load:", time.time() - start)
+
     #Remove fragments with the same smarts strings
     print("Found", len(frag_smarts), "original fragments")
     frag_smarts = list(set(frag_smarts))
     print("Found", len(frag_smarts), "fragments after removing duplicate SMARTS")
-    frags = []
-    for s in tqdm((frag_smarts)): #| loadSmarts(sys.argv[2])):
+
+    frag_mols = []
+    for s in frag_smarts: #| loadSmarts(sys.argv[2])):
         try:
-            frags.append((Chem.MolFromSmarts(s),s))
+            frag_mols.append(Chem.MolFromSmarts(s))
         except:
             pass
-    frags=UniqSmarts(frags)
-    print("Found", len(frags), "many unique fragments")
+
+    cpd_combinations = combinations(frag_mols, 2) #Generate combinations
+
+    #Parallel unique function - chunksize=1000 based on 10 ms best practice (1 iter=0.01ms)
+    non_unique_frags = list(pool.imap(same_or_timeout, cpd_combinations, chunksize = 1000))
+    non_unique_frags = list(filter(bool,non_unique_frags))
+
+    print(non_unique_frags)
+    print("Found", len(non_unique_frags), "nonunique fragments")
+
+    #For each nonunique set, remove one of the nonunique fragments (leave the other)
+    for c in non_unique_frags:
+        s1, s2 = c
+        try:
+            frag_smarts.remove(s1)
+        except:
+            try:
+                frag_smarts.remove(s2)
+            except:
+                #If neither were in the fragment list, problem solved
+                pass
+
+    print("Found", len(frag_smarts), "many unique fragments")
     print("Time:", time.time() - start)
 
-    pickle.dump(frags, open(output_fp, "wb"))
+    pickle.dump(frags_smarts, open(output_fp, "wb"))
 
 """ Creates a dataframe from the Reaxys subset number n between 1-10
     Input: the number of the specific section of the database
@@ -230,21 +231,27 @@ def main():
         print("Done with subset", i, "...")
         print("Df size", len(df.index))
 
-    kegg_size = len(kegg_mols)
-    del kegg_mols
-    for i in range(10):
-        reaxys_mols = sample_Reaxys(df, kegg_size)
+    ### ADENINE TEST (FOR ERNEST) ###
+    #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
 
-        ### ADENINE TEST (FOR ERNEST) ###
-        #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
+    ### PARALLEL FRAGMENT GENERTION ###
+    pool = Pool(processes=16)
+    RDLogger.DisableLog('rdApp.*')
 
-        ### PARALLEL FRAGMENT GENERTION ###
-        pool = Pool(processes=16)
+    #kegg_size = len(kegg_mols)
+    for i in range(100):
+        print("Analyzing sample", i)
+        fp = "Technology/Data/Reaxys_1000_Samples/"
+        reaxys_mols = sample_Reaxys(df, 1000)
 
-        generate_fragments(pool, reaxys_mols, "Technology/Data/Reaxys_fragments_keggSize_" + str(i) + ".p")
+        #Save mols for future occurrence testing
+        pickle.dump(reaxys_mols, open(fp + "sample_" + str(i) + "_ReaxysMols.p", "wb"))
+
+        generate_fragments(pool, reaxys_mols, fp + "sample_" + str(i) + "frags.p")
 
         ### FIND UNIQUE FRAGMENTS ###
-        find_unique_frags("Technology/Data/Reaxys_fragments_keggSize_" + str(i) + ".p", "Technology/Data/Reaxys_fragments_keggSize_0" + str(i) + "_unique.p")
+        find_unique_frags(pool, fp + "sample_" + str(i) + "frags.p", fp + "sample_" + str(i) + "frags_unique.p")
+        print()
 
 if __name__ == "__main__":
     main()
