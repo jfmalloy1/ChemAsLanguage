@@ -162,7 +162,6 @@ def find_unique_frags(pool, input_fp, output_fp):
     non_unique_frags = list(pool.imap(same_or_timeout, cpd_combinations, chunksize = 1000))
     non_unique_frags = list(filter(bool,non_unique_frags))
 
-    print(non_unique_frags)
     print("Found", len(non_unique_frags), "nonunique fragments")
 
     #For each nonunique set, remove one of the nonunique fragments (leave the other)
@@ -180,7 +179,7 @@ def find_unique_frags(pool, input_fp, output_fp):
     print("Found", len(frag_smarts), "many unique fragments")
     print("Time:", time.time() - start)
 
-    pickle.dump(frags_smarts, open(output_fp, "wb"))
+    pickle.dump(frag_smarts, open(output_fp, "wb"))
 
 """ Creates a dataframe from the Reaxys subset number n between 1-10
     Input: the number of the specific section of the database
@@ -239,7 +238,7 @@ def main():
     RDLogger.DisableLog('rdApp.*')
 
     #kegg_size = len(kegg_mols)
-    for i in range(100):
+    for i in range(10):
         print("Analyzing sample", i)
         fp = "Technology/Data/Reaxys_1000_Samples/"
         reaxys_mols = sample_Reaxys(df, 1000)

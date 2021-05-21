@@ -31,6 +31,7 @@ def mol_from_smarts(smarts):
     Output: dictionary containing number of time a fragment appears in the overall distribution {smarts:occurances}
 """
 def mol_count(mols, frags):
+    print(frags)
     h = {}
     for (f,s) in tqdm(frags):
         h[s] = 0
@@ -44,13 +45,18 @@ def mol_count(mols, frags):
     Output: list of smarts string & count (will be converted to dictionary later)
 """
 def mol_count_parallel(mols, frag):
+    try:
+        f = Chem.MolFromSmarts(frag)
+    except:
+        return [frag, 0]
+    
     count = 0
-    f,s = frag
+    #f,s = frag
     for m in mols:
         if m.HasSubstructMatch(f):
             count += 1
 
-    return [s, count]
+    return [frag, count]
 
 """ Find the base fragments - those that appear in all splits
     Input: list of lists of fragments. Overarching list - all splits, each sublist - fragments within that split
@@ -122,25 +128,29 @@ def convert_dist_toCSV(fp):
     df.to_csv(fp[:-2] + ".csv")
 
 def main():
-    # ## Read in mol objects of KEGG ##
-    with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
-        mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
-        mols = [m for m in mols if m != None]
-    #
+    # # ## Read in mol objects of KEGG ##
+    # with open("Biology/Data/kegg_smiles.txt",'r') as smiles:
+    #     mols = [Chem.MolFromSmiles(smi.strip()) for smi in smiles]
+    #     mols = [m for m in mols if m != None]
+
+    ## Read in mol objects from KEGG sampling
+    mols =  pickle.load(open("Technology/Data/Reaxys_1000_Samples/sample_0_ReaxysMols.p", "rb"))
+
     # Parallel Occurances calculations
-    pool = Pool(processes=16)
+    pool = Pool(processes=5)
     # dirpath = "Biology/Data/Tests/Timeout/"
     # for file in os.listdir(dirpath): #For reading in all fragments
     #     if file.endswith("_unique.p"): #ensure only unique fragment sets are counted
     start = time.time()
     # fp = dirpath + file
-    print("Analyzing: Biology/Data/KEGG_fragments_full_occurances_t01_smarts_unique.p")
-    frags = pickle.load(open("Biology/Data/KEGG_fragments_full_occurances_t01_smarts_unique.p", "rb")) #Load in fragments
+    print("Analyzing: Technology/Data/Reaxys_1000_Samples/sample_0frags_uniqe.p")
+    frags = pickle.load(open("Technology/Data/Reaxys_1000_Samples/sample_0frags_unique.p", "rb")) #Load in fragments
+    print(frags[0:10])
     print("Analyzing", len(frags), "fragments")
     frag_occurances = []
     frag_occurances = pool.starmap(mol_count_parallel, tqdm(zip([mols]*len(frags), frags), total=len(frags))) #Parallel occurances calculations
     h = {f[0]: f[1] for f in frag_occurances} #Convert list of lists into dictionary
-    pickle.dump(h, open("Biology/Data/KEGG_fragments_full_occurances_t01_smarts_unique.p", "wb")) #Save dictionary to new pickle file
+    pickle.dump(h, open("Technology/Data/Reaxys_1000_Samples/sample_0frags_unique.p", "wb")) #Save dictionary to new pickle file
     print("Time:", time.time() - start)
     print()
 
@@ -160,7 +170,7 @@ def main():
 
     # for f in os.listdir("Biology/Data/Tests/Timeout/"):
     #     if f.endswith("_occurances.p"):
-    convert_dist_toCSV("Biology/Data/KEGG_fragments_full_occurances_t01_smarts_unique.p")
+    convert_dist_toCSV("Technology/Data/Reaxys_1000_Samples/sample_0frags_unique.p")
 
     # ## Find pre-made distribution over random molecule set ##
     # h = pd.read_csv("Tests/Hundred_cpds_random_subsampleOccurances/dup_0_occurances.csv", header=None, skiprows=1, index_col=0, squeeze=True).to_dict()
