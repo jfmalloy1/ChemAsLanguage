@@ -219,16 +219,16 @@ def main():
     # #Test: Time Fragments for Earth atmosphere SMILES strings
     # cpd_smiles = open("Other/Earth_atmosphere_SMILES.txt", "rb").readlines()
 
-    ### Get KEGG Mol Objects ###
-    kegg_mols = read_KEGG_mols()
-
-    ### Get Reaxys Mol Objects ###
-    #Read in full reaction database
-    df = pd.DataFrame()
-    for i in range(1,11):
-        df = df.append(read_cpds(str(i)), ignore_index=True)
-        print("Done with subset", i, "...")
-        print("Df size", len(df.index))
+    # ### Get KEGG Mol Objects ###
+    # kegg_mols = read_KEGG_mols()
+    #
+    # ### Get Reaxys Mol Objects ###
+    # #Read in full reaction database
+    # df = pd.DataFrame()
+    # for i in range(1,11):
+    #     df = df.append(read_cpds(str(i)), ignore_index=True)
+    #     print("Done with subset", i, "...")
+    #     print("Df size", len(df.index))
 
     ### ADENINE TEST (FOR ERNEST) ###
     #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
@@ -237,20 +237,23 @@ def main():
     pool = Pool(processes=16)
     RDLogger.DisableLog('rdApp.*')
 
-    #kegg_size = len(kegg_mols)
-    for i in range(10):
-        print("Analyzing sample", i)
-        fp = "Technology/Data/Reaxys_1000_Samples/"
-        reaxys_mols = sample_Reaxys(df, 1000)
+    # #kegg_size = len(kegg_mols)
+    # for i in range(10):
+    #     print("Analyzing sample", i)
+    #     fp = "Technology/Data/Reaxys_1000_Samples/"
+    #     reaxys_mols = sample_Reaxys(df, 1000)
+    #
+    #     #Save mols for future occurrence testing
+    #     pickle.dump(reaxys_mols, open(fp + "sample_" + str(i) + "_ReaxysMols.p", "wb"))
+    #
+    #     generate_fragments(pool, reaxys_mols, fp + "sample_" + str(i) + "frags.p")
+    #
+    #     ### FIND UNIQUE FRAGMENTS ###
+    #     find_unique_frags(pool, fp + "sample_" + str(i) + "frags.p", fp + "sample_" + str(i) + "frags_unique.p")
+    #     print()
 
-        #Save mols for future occurrence testing
-        pickle.dump(reaxys_mols, open(fp + "sample_" + str(i) + "_ReaxysMols.p", "wb"))
-
-        generate_fragments(pool, reaxys_mols, fp + "sample_" + str(i) + "frags.p")
-
-        ### FIND UNIQUE FRAGMENTS ###
-        find_unique_frags(pool, fp + "sample_" + str(i) + "frags.p", fp + "sample_" + str(i) + "frags_unique.p")
-        print()
+    for fp in os.listdir("Technology/Data/"):
+        find_unique_frags(pool, "Technology/Data/" + fp, "Technology/Data/" + fp[:-2] + "_unique.p")
 
 if __name__ == "__main__":
     main()
