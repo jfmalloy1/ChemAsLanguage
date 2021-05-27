@@ -34,7 +34,7 @@ def cif_to_graph(fp):
         elif item.frame is not None:
             print('frame', item.frame)
     #Current problem - no atoms seem to be added
-    print(list(block.find_loop('_atom_site_type_symbol')))
+    print(list(block.find_loop('_atom_site_label')))
 
     cc1 = gemmi.make_chemcomp_from_block(block)
     cc1.remove_hydrogens() #Not sure why this is included - take this out later?
@@ -44,7 +44,7 @@ def cif_to_graph(fp):
 
 def main():
     #Convert cif to networkx graph
-    cc1 = cif_to_graph("Minerals/Data/CIF_Files/mp_11725_CO2.cif")
+    cc1 = cif_to_graph("Minerals/Data/CIF_Files/9014258.cif")
 
     #Perform MCS algorithm
 
