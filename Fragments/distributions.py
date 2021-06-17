@@ -138,7 +138,7 @@ def main():
         mols = pickle.load(open("Technology/Data/" + fp, "rb"))
 
         # Parallel Occurances calculations
-        pool = Pool(processes=16)
+        pool = Pool(processes=6)
         # dirpath = "Biology/Data/Tests/Timeout/"
         # for file in os.listdir(dirpath): #For reading in all fragments
         #     if file.endswith("_unique.p"): #ensure only unique fragment sets are counted
