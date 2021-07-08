@@ -254,7 +254,7 @@ def main():
 
     # #for fp in os.listdir("Technology/Data/"):
     #Test on one file
-    find_unique_frags(pool, "Technology/Data/Reaxys_1000_Samples/sample_0frags.p", "Technology/Data/Reaxys_1000_Samples/sample_0frags.p_unique.p")
+    find_unique_frags(pool, "Technology/Data/Reaxys_fragments_keggSize_0.p", "Technology/Data/Reaxys_fragments_keggSize_0unique.p")
 
 if __name__ == "__main__":
     main()
