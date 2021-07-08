@@ -10,7 +10,9 @@ import gemmi
 def graph_from_chemcomp(cc):
     G = networkx.Graph()
     for atom in cc.atoms:
+        print(atom)
         G.add_node(atom.id, Z=atom.el.atomic_number)
+        print(G)
     for bond in cc.rt.bonds:
         G.add_edge(bond.id1.atom, bond.id2.atom)
     return G
@@ -25,18 +27,20 @@ def cif_to_graph(fp):
     block = doc.sole_block()  # mmCIF has exactly one block
     print(block.name)
 
-    for item in block:
-        print(item.line_number)
-        if item.pair is not None:
-            print('pair', item.pair)
-        elif item.loop is not None:
-            print('loop', item.loop)
-        elif item.frame is not None:
-            print('frame', item.frame)
+    # for item in block:
+    #     print(item.line_number)
+    #     if item.pair is not None:
+    #         print('pair', item.pair)
+    #     elif item.loop is not None:
+    #         print('loop', item.loop)
+    #     elif item.frame is not None:
+    #         print('frame', item.frame)
     #Current problem - no atoms seem to be added
-    print(list(block.find_loop('_atom_site_label')))
+    print(list(block.find_loop('_atom_site.type_symbol')))
 
+    print()
     cc1 = gemmi.make_chemcomp_from_block(block)
+    print(cc1)
     cc1.remove_hydrogens() #Not sure why this is included - take this out later?
     print(cc1)
     G = graph_from_chemcomp(cc1)
@@ -44,7 +48,7 @@ def cif_to_graph(fp):
 
 def main():
     #Convert cif to networkx graph
-    cc1 = cif_to_graph("Minerals/Data/CIF_Files/9014258.cif")
+    cc1 = cif_to_graph("Minerals/Data/CIF_Files/1m2z.cif")
 
     #Perform MCS algorithm
 

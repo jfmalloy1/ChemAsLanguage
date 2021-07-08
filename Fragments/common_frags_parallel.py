@@ -234,7 +234,7 @@ def main():
     #adenine_fragments("C1=NC2=NC=NC(=C2N1)N", cpd_mols)
 
     ### PARALLEL FRAGMENT GENERTION ###
-    pool = Pool(processes=16)
+    pool = Pool(processes=8)
     RDLogger.DisableLog('rdApp.*')
 
     # #kegg_size = len(kegg_mols)
@@ -252,8 +252,9 @@ def main():
     #     find_unique_frags(pool, fp + "sample_" + str(i) + "frags.p", fp + "sample_" + str(i) + "frags_unique.p")
     #     print()
 
-    for fp in os.listdir("Technology/Data/"):
-        find_unique_frags(pool, "Technology/Data/" + fp, "Technology/Data/" + fp[:-2] + "_unique.p")
+    # #for fp in os.listdir("Technology/Data/"):
+    #Test on one file
+    find_unique_frags(pool, "Technology/Data/Reaxys_1000_Samples/sample_0frags.p", "Technology/Data/Reaxys_1000_Samples/sample_0frags.p_unique.p")
 
 if __name__ == "__main__":
     main()
